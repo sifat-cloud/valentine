@@ -13,7 +13,7 @@ A tiny playful static page to ask someone to be your Valentine. One button is un
 
 ## Features
 
-- Playful "No" button that avoids clicks
+- Playful "No" button that avoids clicks and **cannot be used to say no** — it playfully surrenders and triggers the Yes flow 🎭
 - Celebrate with a GIF and **confetti** animation when someone clicks **Yes** 🎉
 - **Customize** the celebration message and GIF via the "Customize" button (saved to localStorage)
 

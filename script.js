@@ -31,26 +31,50 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   loadCustom();
 
-  // move "No" button whenever user tries to interact
-  function moveNoButton(){
-    const contRect = container.getBoundingClientRect();
-    const btnRect = noBtn.getBoundingClientRect();
-    const maxLeft = Math.max(0, contRect.width - btnRect.width - 8);
-    const maxTop = Math.max(0, contRect.height - btnRect.height - 8);
-    const left = Math.random() * maxLeft;
-    const top = Math.random() * maxTop;
-    noBtn.style.position = 'absolute';
-    noBtn.style.left = left + 'px';
-    noBtn.style.top = top + 'px';
-    // tiny shake to make it playful
-    noBtn.animate([{transform:'translateY(-6px)'},{transform:'translateY(0)'}],{duration:220,easing:'ease-out'});
+  // playful "No" behavior — it trolls the user and makes saying "No" impossible
+  function handleNoTroll(ev){
+    ev.preventDefault();
+    // if it's already trolling, ignore
+    if(noBtn.dataset.trolling === '1') return;
+    noBtn.dataset.trolling = '1';
+    noBtn.disabled = true;
+    const originalText = noBtn.textContent;
+    noBtn.textContent = "No... wait!";
+    noBtn.classList.add('troll');
+
+    // calculate vector toward the Yes button and animate there
+    const yesRect = yesBtn.getBoundingClientRect();
+    const noRect = noBtn.getBoundingClientRect();
+    const dx = (yesRect.left + yesRect.width/2) - (noRect.left + noRect.width/2);
+    const dy = (yesRect.top + yesRect.height/2) - (noRect.top + noRect.height/2);
+
+    // use transform animation so we don't change layout
+    noBtn.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1), opacity 240ms';
+    noBtn.style.transform = `translate(${dx}px, ${dy}px) scale(.7)`;
+
+    // after it "reaches" the Yes, fade it and trigger the Yes action
+    setTimeout(()=>{
+      noBtn.style.opacity = '0';
+    }, 480);
+
+    setTimeout(()=>{
+      // restore button visuals (but not the original position — stays playful)
+      noBtn.style.transform = '';
+      noBtn.style.opacity = '';
+      noBtn.classList.remove('troll');
+      noBtn.textContent = originalText;
+      noBtn.disabled = false;
+      delete noBtn.dataset.trolling;
+
+      // trigger the yes flow so No never wins
+      yesBtn.click();
+    }, 760);
   }
 
-  // events to try and click the "no" button
-  ['mouseenter','click','touchstart','focus'].forEach(e => noBtn.addEventListener(e, (ev)=>{ ev.preventDefault(); moveNoButton(); }));
-
-  // Also keep it moving if user uses keyboard navigation
-  noBtn.addEventListener('keydown', (ev)=>{ ev.preventDefault(); moveNoButton(); });
+  // bind the troll handler to common interactions
+  ['mouseenter','click','touchstart','focus'].forEach(e => noBtn.addEventListener(e, (ev)=>{ handleNoTroll(ev); }));
+  // keyboard support: Enter/Space
+  noBtn.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter' || ev.key===' ' || ev.key==='Spacebar'){ ev.preventDefault(); handleNoTroll(ev); } });
 
   // simple confetti
   function launchConfetti(){

@@ -29,6 +29,10 @@ h1{font-size:2rem;margin:0 0 .5rem;color:var(--accent)}
 .btn:active{transform:scale(.98)}
 .yes{background:linear-gradient(90deg,#ff7a7a,#ff4d6d);color:white}
 .no{background:#fff;color:var(--accent);border:2px solid var(--accent);position:relative}
+.btn.troll{animation:wobble .6s ease;transform-origin:center}
+
+@keyframes wobble{0%{transform:translateX(0)}25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-5px)}100%{transform:translateX(0)}}
+
 .footer{margin-top:1.25rem;color:#8b6b6b;font-size:.9rem}
 .link-btn{background:transparent;border:0;color:var(--accent);cursor:pointer;margin-left:.5rem;font-weight:700}
 
