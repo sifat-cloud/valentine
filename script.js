@@ -74,13 +74,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
   function playChime(){ if(!state.sound) return; try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type='sine'; o.frequency.value=720; g.gain.value=0.02; o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.3); setTimeout(()=>{ o.stop(); ctx.close(); },380); }catch(e){} }
   function playSigh(){ if(!state.sound) return; try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type='sine'; o.frequency.value=220; g.gain.value=0.02; o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.7); setTimeout(()=>{ o.stop(); ctx.close(); },800); }catch(e){} }
 
-  // rapid message flood that runs when No is pressed repeatedly
+  // sequential message flood that runs when No is pressed
   let floodRunning = false;
-  function startNoFlood(){
+  async function startNoFlood(){
     if(floodRunning) return;
     floodRunning = true;
     const floodCount = Math.min(140, sadPhrases.length);
-    let idx = 0;
+
+    // ensure only one flood element exists
+    const existing = card.querySelector('.flood'); if(existing) existing.remove();
 
     // create a centered message box
     const flood = document.createElement('div'); flood.className='flood';
@@ -91,16 +93,25 @@ document.addEventListener('DOMContentLoaded', ()=>{
     // disable buttons while flooding
     noBtn.disabled = true; yesBtn.disabled = true;
 
-    const intv = setInterval(()=>{
-      msg.textContent = sadPhrases[idx++];
-      msg.animate([{opacity:0, transform:'translateY(6px)'},{opacity:1, transform:'translateY(0)'}],{duration:80,easing:'ease-out'});
-      if(idx >= floodCount){ clearInterval(intv); setTimeout(()=>{
-        flood.remove(); noBtn.disabled = false; yesBtn.disabled = false; floodRunning = false;
-        // after the flood show the overlay with the last tender message
-        sadMsg.textContent = sadPhrases[Math.min(sadPhrases.length-1, state.noCount-1)];
-        sadOverlay.classList.add('show'); sadOverlay.setAttribute('aria-hidden','false');
-      }, 600); }
-    }, 60);
+    // sequentially show messages with a short pause — avoids piling them up
+    for(let i=0;i<floodCount;i++){
+      msg.textContent = sadPhrases[i];
+      // trigger CSS transition by toggling a class
+      msg.classList.remove('visible');
+      // force reflow to restart the transition
+      void msg.offsetWidth;
+      msg.classList.add('visible');
+      // slightly longer interval for readability
+      await new Promise(r => setTimeout(r, 80));
+    }
+
+    // finish flood: leave a brief pause then remove
+    setTimeout(()=>{
+      flood.remove(); noBtn.disabled = false; yesBtn.disabled = false; floodRunning = false;
+      // after the flood show the overlay with the last tender message
+      sadMsg.textContent = sadPhrases[Math.min(sadPhrases.length-1, state.noCount-1)];
+      sadOverlay.classList.add('show'); sadOverlay.setAttribute('aria-hidden','false');
+    }, 320);
   }
 
   // Sad behavior when No pressed
