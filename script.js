@@ -74,44 +74,44 @@ document.addEventListener('DOMContentLoaded', ()=>{
   function playChime(){ if(!state.sound) return; try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type='sine'; o.frequency.value=720; g.gain.value=0.02; o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.3); setTimeout(()=>{ o.stop(); ctx.close(); },380); }catch(e){} }
   function playSigh(){ if(!state.sound) return; try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type='sine'; o.frequency.value=220; g.gain.value=0.02; o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.7); setTimeout(()=>{ o.stop(); ctx.close(); },800); }catch(e){} }
 
-  // sequential message flood that runs when No is pressed
-  let floodRunning = false;
-  async function startNoFlood(){
-    if(floodRunning) return;
-    floodRunning = true;
-    const floodCount = Math.min(140, sadPhrases.length);
-
+  // Show one gentle flood message per No press (no autoplay)
+  let floodIndex = 0;
+  let floodTimeout = null;
+  function showNextFloodMessage(){
     // ensure only one flood element exists
-    const existing = card.querySelector('.flood'); if(existing) existing.remove();
-
-    // create a centered message box
-    const flood = document.createElement('div'); flood.className='flood';
-    const msg = document.createElement('div'); msg.className='flood-msg'; msg.textContent='';
-    flood.appendChild(msg);
-    card.appendChild(flood);
-
-    // disable buttons while flooding
-    noBtn.disabled = true; yesBtn.disabled = true;
-
-    // sequentially show messages with a short pause — avoids piling them up
-    for(let i=0;i<floodCount;i++){
-      msg.textContent = sadPhrases[i];
-      // trigger CSS transition by toggling a class
-      msg.classList.remove('visible');
-      // force reflow to restart the transition
-      void msg.offsetWidth;
-      msg.classList.add('visible');
-      // slightly longer interval for readability
-      await new Promise(r => setTimeout(r, 80));
+    let flood = card.querySelector('.flood');
+    let msg;
+    if(!flood){
+      flood = document.createElement('div'); flood.className='flood';
+      msg = document.createElement('div'); msg.className='flood-msg'; msg.textContent='';
+      flood.appendChild(msg);
+      card.appendChild(flood);
+    } else {
+      msg = flood.querySelector('.flood-msg');
     }
 
-    // finish flood: leave a brief pause then remove
-    setTimeout(()=>{
-      flood.remove(); noBtn.disabled = false; yesBtn.disabled = false; floodRunning = false;
-      // after the flood show the overlay with the last tender message
-      sadMsg.textContent = sadPhrases[Math.min(sadPhrases.length-1, state.noCount-1)];
-      sadOverlay.classList.add('show'); sadOverlay.setAttribute('aria-hidden','false');
-    }, 320);
+    // clamp index and show the next phrase
+    floodIndex = Math.min(floodIndex, sadPhrases.length-1);
+    msg.textContent = sadPhrases[floodIndex++] || sadPhrases[sadPhrases.length-1];
+
+    // trigger CSS transition
+    msg.classList.remove('visible');
+    void msg.offsetWidth;
+    msg.classList.add('visible');
+
+    // clear previous timeout and hide after a short duration
+    if(floodTimeout) clearTimeout(floodTimeout);
+    floodTimeout = setTimeout(()=>{
+      msg.classList.remove('visible');
+      // clean up container shortly after hiding
+      setTimeout(()=>{ if(flood && flood.parentNode) flood.remove(); }, 300);
+
+      // if they've pressed No enough times, show the overlay with a tender message
+      if(state.noCount >= 3){
+        sadMsg.textContent = sadPhrases[Math.min(sadPhrases.length-1, state.noCount-1)];
+        sadOverlay.classList.add('show'); sadOverlay.setAttribute('aria-hidden','false');
+      }
+    }, 1800);
   }
 
   // Sad behavior when No pressed
@@ -120,8 +120,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     save();
     refreshUI();
 
-    // start an attentive flood of messages so the user has no time to click No again
-    startNoFlood();
+    // show a single gentle message per No press (no autoplay)
+    showNextFloodMessage();
 
     // play a soft sigh and reduce heart opacity
     playSigh(); heart.style.opacity = String(Math.max(0.35, 1 - state.noCount*0.18));
