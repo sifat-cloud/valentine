@@ -48,6 +48,10 @@ body.sad{filter:grayscale(.6) contrast(.9) brightness(.92)}
 /* confetti canvas */
 #confettiCanvas{position:fixed;left:0;top:0;pointer-events:none;z-index:9999}
 
+/* rapid message flood shown when No is pressed */
+.flood{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.flood-msg{background:rgba(255,255,255,0.96);padding:1rem 1.25rem;border-radius:12px;font-weight:800;color:var(--accent);box-shadow:0 14px 40px rgba(0,0,0,0.12);font-size:1rem;max-width:84%;text-align:center}
+
 /* little visual glitches */
 .glitch .heart{transform:translateX(-6px) rotate(-2deg)}
 .glitch h1::after{content:' will you—will you—';display:block;color:var(--accent);opacity:.9}

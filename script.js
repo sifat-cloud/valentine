@@ -30,12 +30,32 @@ document.addEventListener('DOMContentLoaded', ()=>{
     sound: localStorage.getItem('valentine:sound')==='1'
   };
 
-  const sadPhrases = [
+  // generate a long list of gentle/sad variations so the site can "flood" messages
+  const sadTemplates = [
     "Oh… that stung a little.",
     "I thought we had a moment…",
     "That's okay. I still care.",
-    "I guess I tried. Still here."
+    "I guess I tried. Still here.",
+    "I'm a little quiet now.",
+    "It hurts, but I understand.",
+    "No worries. I'm still here.",
+    "I was really hoping.",
+    "A soft sigh…",
+    "I'll be here if you change your mind.",
+    "Just being honest.",
+    "Quietly hoping for yes.",
+    "I miss your presence.",
+    "It's okay to be unsure.",
+    "I'll keep a light on for you."
   ];
+
+  // create many variations (150) programmatically so messages are fast but varied
+  const sadPhrases = Array.from({length:150}, (_,i)=>{
+    const base = sadTemplates[i % sadTemplates.length];
+    const suffixes = ['', '...', ' 💔', ' — still here', ' (I mean it)'];
+    const suffix = suffixes[i % suffixes.length];
+    return `${base}${suffix}`;
+  });
 
   function save(){ localStorage.setItem('valentine:noCount', String(state.noCount)); localStorage.setItem('valentine:yesCount', String(state.yesCount)); localStorage.setItem('valentine:sound', state.sound?'1':'0'); }
 
@@ -54,15 +74,43 @@ document.addEventListener('DOMContentLoaded', ()=>{
   function playChime(){ if(!state.sound) return; try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type='sine'; o.frequency.value=720; g.gain.value=0.02; o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.3); setTimeout(()=>{ o.stop(); ctx.close(); },380); }catch(e){} }
   function playSigh(){ if(!state.sound) return; try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type='sine'; o.frequency.value=220; g.gain.value=0.02; o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.7); setTimeout(()=>{ o.stop(); ctx.close(); },800); }catch(e){} }
 
+  // rapid message flood that runs when No is pressed repeatedly
+  let floodRunning = false;
+  function startNoFlood(){
+    if(floodRunning) return;
+    floodRunning = true;
+    const floodCount = Math.min(140, sadPhrases.length);
+    let idx = 0;
+
+    // create a centered message box
+    const flood = document.createElement('div'); flood.className='flood';
+    const msg = document.createElement('div'); msg.className='flood-msg'; msg.textContent='';
+    flood.appendChild(msg);
+    card.appendChild(flood);
+
+    // disable buttons while flooding
+    noBtn.disabled = true; yesBtn.disabled = true;
+
+    const intv = setInterval(()=>{
+      msg.textContent = sadPhrases[idx++];
+      msg.animate([{opacity:0, transform:'translateY(6px)'},{opacity:1, transform:'translateY(0)'}],{duration:80,easing:'ease-out'});
+      if(idx >= floodCount){ clearInterval(intv); setTimeout(()=>{
+        flood.remove(); noBtn.disabled = false; yesBtn.disabled = false; floodRunning = false;
+        // after the flood show the overlay with the last tender message
+        sadMsg.textContent = sadPhrases[Math.min(sadPhrases.length-1, state.noCount-1)];
+        sadOverlay.classList.add('show'); sadOverlay.setAttribute('aria-hidden','false');
+      }, 600); }
+    }, 60);
+  }
+
   // Sad behavior when No pressed
   function handleNo(){
     state.noCount++;
     save();
     refreshUI();
 
-    // Show sad overlay with increasingly tender messages
-    sadMsg.textContent = sadPhrases[Math.min(sadPhrases.length-1, state.noCount-1)];
-    sadOverlay.classList.add('show'); sadOverlay.setAttribute('aria-hidden','false');
+    // start an attentive flood of messages so the user has no time to click No again
+    startNoFlood();
 
     // play a soft sigh and reduce heart opacity
     playSigh(); heart.style.opacity = String(Math.max(0.35, 1 - state.noCount*0.18));

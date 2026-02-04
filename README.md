@@ -6,6 +6,7 @@ A redesigned, emotional Valentine page that respects the user's feelings. The si
 
 - A simpler, elegant layout with a central beating heart and clear Yes/No actions.
 - Emotional states: every **No** increases sadness (gentle messages, desaturation, slower animations). The site only recovers after **Yes**.
+- No message flood: pressing **No** triggers a rapid sequence of gentle messages (150+ variations) that occupy the moment and encourage reflection before another No — the site expresses feelings, not punishment.
 - Customization: user can set the Yes message and GIF; sound toggle (off by default).
 - Subtle mechanics: idle message for patience, soft confetti, and emotional audio cues.
 
