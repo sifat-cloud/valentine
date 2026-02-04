@@ -86,33 +86,38 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const MSG_DURATION = 1800;
 
   function showNextFloodMessage(){
-    // ensure only one flood element exists
-    let flood = card.querySelector('.flood');
-    let msg;
-    if(!flood){
-      flood = document.createElement('div'); flood.className='flood';
-      msg = document.createElement('div'); msg.className='flood-msg'; msg.textContent='';
-      flood.appendChild(msg);
-      card.appendChild(flood);
-    } else {
-      msg = flood.querySelector('.flood-msg');
+    // show the next gentle phrase using the sad overlay (no floating bubble)
+    floodIndex = Math.min(floodIndex, sadPhrases.length-1);
+    const phrase = sadPhrases[floodIndex++] || sadPhrases[sadPhrases.length-1];
+
+    // set overlay message and reveal it
+    sadMsg.textContent = phrase;
+    sadOverlay.classList.add('show'); sadOverlay.setAttribute('aria-hidden','false');
+
+    // clear any previous auto-close timers
+    if(floodTimeout) clearTimeout(floodTimeout);
+
+    // if the user has already pressed No repeatedly, keep overlay persistent
+    if(tempNoCount >= NO_OVERLAY_THRESHOLD){
+      // commit to persistent sadness
+      state.noCount = Math.max(state.noCount, tempNoCount);
+      save(); refreshUI();
+      heart.style.opacity = String(Math.max(0.35, 1 - state.noCount*0.18));
+      if(state.noCount >= 3){ heart.classList.remove('pulse'); card.classList.add('soft-slow'); }
+      return;
     }
 
-    // clamp index and show the next phrase
-    floodIndex = Math.min(floodIndex, sadPhrases.length-1);
-    msg.textContent = sadPhrases[floodIndex++] || sadPhrases[sadPhrases.length-1];
-
-    // trigger CSS transition
-    msg.classList.remove('visible');
-    void msg.offsetWidth;
-    msg.classList.add('visible');
-
-    // clear previous timeout and hide after a short duration
-    if(floodTimeout) clearTimeout(floodTimeout);
+    // otherwise auto-hide the overlay after MSG_DURATION and cheer up
     floodTimeout = setTimeout(()=>{
-      msg.classList.remove('visible');
-      // clean up container shortly after hiding
-      setTimeout(()=>{ if(flood && flood.parentNode) flood.remove(); }, 300);
+      // only auto-close if persistent sadness wasn't triggered in the meantime
+      if(tempNoCount < NO_OVERLAY_THRESHOLD){
+        sadOverlay.classList.remove('show'); sadOverlay.setAttribute('aria-hidden','true');
+        playChime();
+        tempNoCount = 0;
+        heart.style.opacity = '1';
+        refreshUI();
+      }
+      floodTimeout = null;
     }, MSG_DURATION);
   }
 
@@ -158,7 +163,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
   noBtn.addEventListener('click', (e)=>{ e.preventDefault(); handleNo(); });
 
   // allow small 'cheer up' button on overlay
-  cheerBtn.addEventListener('click', ()=>{ sadOverlay.classList.remove('show'); sadOverlay.setAttribute('aria-hidden','true'); status.textContent = 'Thanks. If you feel it, say Yes.'; });
+  cheerBtn.addEventListener('click', ()=>{
+    // clear any ephemeral timers and reset temporary counters
+    if(tempNoTimer){ clearTimeout(tempNoTimer); tempNoTimer = null; }
+    if(floodTimeout){ clearTimeout(floodTimeout); floodTimeout = null; }
+
+    sadOverlay.classList.remove('show'); sadOverlay.setAttribute('aria-hidden','true');
+    tempNoCount = 0;
+    playChime();
+    heart.style.opacity = '1';
+    refreshUI();
+    status.textContent = 'Thanks. If you feel it, say Yes.';
+  });
 
   // Yes button: reset sadness and celebrate
   function handleYes(){
