@@ -9,25 +9,31 @@
 <body>
   <main class="hero" role="main" aria-labelledby="title">
     <div class="card">
-      <h1 id="title">Would you be my Valentine?</h1>
-      <div class="heart-wrap">
+      <header class="card-head">
+        <h1 id="title">Will you be my Valentine?</h1>
+        <p class="subhead">A little question, an honest heart.</p>
+      </header>
+
+      <div class="heart-stage">
         <div id="heart" class="heart" aria-hidden="true">❤</div>
-      </div>
-      <p class="lead">A little question. A lot of feeling.</p>
-
-      <div class="buttons">
-        <button id="yesBtn" class="btn yes">Yes</button>
-        <button id="noBtn" class="btn no">No</button>
+        <div class="decor hearts" aria-hidden="true">💕</div>
       </div>
 
-      <div class="status" aria-live="polite" id="statusMsg">Be honest — you can press No, but I might get a little sad.</div>
+      <div class="cta">
+        <button id="yesBtn" class="btn yes" aria-label="Say Yes">Yes <span class="spark">✨</span></button>
+        <button id="noBtn" class="btn no ghost" aria-label="Say No">No</button>
+      </div>
+
+      <div class="status" aria-live="polite" id="statusMsg">Be honest — you can press No, I’ll listen.</div>
 
       <div class="controls">
         <button id="customizeBtn" class="link">Customize</button>
-        <button id="soundToggle" class="link">Sound: Off</button>
+        <button id="soundToggle" class="link" aria-pressed="false">Sound: Off</button>
       </div>
 
-      <p class="footer">Made with <span aria-hidden>♥</span> — no pressure.</p>
+      <footer class="card-foot">
+        <small>Made with <span aria-hidden>♥</span> — no pressure.</small>
+      </footer>
     </div>
   </main>
 

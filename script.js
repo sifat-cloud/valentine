@@ -217,8 +217,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
   customMessageInput.value = localStorage.getItem('valentineMessage') || 'You made me so happy.';
   customGifInput.value = localStorage.getItem('valentineGif') || DEFAULT_GIF;
 
-  // Sound toggle
-  soundToggle.addEventListener('click', ()=>{ state.sound = !state.sound; save(); refreshUI(); });
+  // Sound toggle (aria and state)
+  soundToggle.addEventListener('click', ()=>{ state.sound = !state.sound; save(); refreshUI(); soundToggle.setAttribute('aria-pressed', String(state.sound)); });
+  soundToggle.setAttribute('aria-pressed', String(state.sound));
+
+  // keyboard shortcuts: Y = yes, N = no, Space = secret yes
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'y' || e.key === 'Y'){ e.preventDefault(); yesBtn.focus(); handleYes(); }
+    if(e.key === 'n' || e.key === 'N'){ e.preventDefault(); noBtn.focus(); handleNo(); }
+    if(e.code === 'Space'){ /* secret yes path: gentle confetti */ e.preventDefault(); handleYes(); }
+  });
+
+  // animate heart on load
+  setTimeout(()=>{ heart.classList.add('animate'); }, 420);
 
   // Small thoughtful timers: idle 'stay' message
   let idle=null; function resetIdle(){ if(idle) clearTimeout(idle); idle=setTimeout(()=>{ if(state.noCount===0){ const note=document.createElement('div');note.className='idle-note';note.textContent="I was hoping you'd stay."; card.appendChild(note); setTimeout(()=>note.remove(),4300); } },15000); }
