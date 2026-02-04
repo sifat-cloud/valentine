@@ -3,42 +3,68 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Be My Valentine 💘</title>
+  <title>Would You Be My Valentine?</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="card" role="main">
-    <h1>Will you be my Valentine? <span class="emoji" id="heart">💘</span></h1>
-    <p class="subtitle">Choose wisely...</p>
-    <div id="endingBadge" class="ending-badge" aria-hidden="true">Ending 0 of 6 discovered</div>
+  <main class="hero" role="main" aria-labelledby="title">
+    <div class="card">
+      <h1 id="title">Would you be my Valentine?</h1>
+      <div class="heart-wrap">
+        <div id="heart" class="heart" aria-hidden="true">❤</div>
+      </div>
+      <p class="lead">A little question. A lot of feeling.</p>
 
-    <div class="buttons" aria-hidden="false">
-      <button id="yesBtn" class="btn yes">Yes</button>
-      <button id="noBtn" class="btn no">No</button>
+      <div class="buttons">
+        <button id="yesBtn" class="btn yes">Yes</button>
+        <button id="noBtn" class="btn no">No</button>
+      </div>
+
+      <div class="status" aria-live="polite" id="statusMsg">Be honest — you can press No, but I might get a little sad.</div>
+
+      <div class="controls">
+        <button id="customizeBtn" class="link">Customize</button>
+        <button id="soundToggle" class="link">Sound: Off</button>
+      </div>
+
+      <p class="footer">Made with <span aria-hidden>♥</span> — no pressure.</p>
     </div>
-
-    <p class="footer">Made with ❤️ — Press <strong>Yes</strong> if you dare. <button id="customizeBtn" class="link-btn" aria-label="Customize">✎ Customize</button></p>
   </main>
 
-  <div id="modal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <button id="closeBtn" class="close" aria-label="Close">✕</button>
-      <img id="modalGif" src="https://media.giphy.com/media/3o6gDWzmAzrpi5DQU8/giphy.gif" alt="Celebration" class="celebrate">
-      <h2 id="modalTitle">Yay! 💖</h2>
-      <p id="modalMsg">I'm so happy you said yes. Happy Valentine's Day!</p>
-      <a href="#" id="share" class="share">Share the love</a>
+  <!-- Sad overlay that appears when No is pressed -->
+  <div id="sadOverlay" class="sad-overlay" aria-hidden="true">
+    <div class="sad-box">
+      <div class="tears">😢</div>
+      <p id="sadMsg">Oh… that stung a little.</p>
+      <button id="cheerBtn" class="btn yes small">Cheer Up</button>
     </div>
   </div>
 
+  <!-- Celebrate modal -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button id="closeBtn" class="close" aria-label="Close">✕</button>
+      <div class="celebrate-area">
+        <div id="celebrateGif" class="celebrate-gif" aria-hidden="true"></div>
+        <h2 id="modalTitle">Yay! 💖</h2>
+        <p id="modalMsg">So happy you said yes.</p>
+      </div>
+      <div class="modal-actions">
+        <a href="#" id="share" class="share">Share the love</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customize pane -->
   <div id="customize" class="customize" aria-hidden="true">
     <div class="customize-content">
-      <button id="customClose" class="close" aria-label="Close">✕</button>
-      <h3>Customize</h3>
-      <label>Message <input id="customMessage" type="text" placeholder="I'm so happy you said yes!"></label>
-      <label>GIF URL <input id="customGif" type="url" placeholder="https://media.giphy.com/media/3o6gDWzmAzrpi5DQU8/giphy.gif"></label>
+      <button id="customClose" class="close">✕</button>
+      <h3>Customize message</h3>
+      <label>Yes message <input id="customMessage" type="text" placeholder="You made me so happy..."></label>
+      <label>GIF URL <input id="customGif" type="url" placeholder="https://"></label>
       <div class="custom-actions">
-        <button id="saveCustom" class="btn yes">Save</button>
-        <button id="cancelCustom" class="btn no">Cancel</button>
+        <button id="saveCustom" class="btn yes small">Save</button>
+        <button id="cancelCustom" class="btn no small">Cancel</button>
       </div>
     </div>
   </div>

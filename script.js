@@ -1,12 +1,18 @@
 document.addEventListener('DOMContentLoaded', ()=>{
-  const container = document.querySelector('.card');
+  // Elements
+  const card = document.querySelector('.card');
   const yesBtn = document.getElementById('yesBtn');
   const noBtn = document.getElementById('noBtn');
+  const status = document.getElementById('statusMsg');
+  const heart = document.getElementById('heart');
+  const sadOverlay = document.getElementById('sadOverlay');
+  const sadMsg = document.getElementById('sadMsg');
+  const cheerBtn = document.getElementById('cheerBtn');
   const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMsg = document.getElementById('modalMsg');
+  const celebrateGif = document.getElementById('celebrateGif');
   const closeBtn = document.getElementById('closeBtn');
-  const share = document.getElementById('share');
-
-  // customize elements
   const customizeBtn = document.getElementById('customizeBtn');
   const customizePane = document.getElementById('customize');
   const customClose = document.getElementById('customClose');
@@ -14,237 +20,114 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const cancelCustom = document.getElementById('cancelCustom');
   const customMessageInput = document.getElementById('customMessage');
   const customGifInput = document.getElementById('customGif');
-  const modalMsg = document.getElementById('modalMsg');
-  const modalGif = document.getElementById('modalGif');
+  const soundToggle = document.getElementById('soundToggle');
 
-  const DEFAULT_MSG = "I'm so happy you said yes. Happy Valentine's Day!";
+  // State
   const DEFAULT_GIF = 'https://media.giphy.com/media/3o6gDWzmAzrpi5DQU8/giphy.gif';
+  let state = {
+    noCount: Number(localStorage.getItem('valentine:noCount')||0),
+    yesCount: Number(localStorage.getItem('valentine:yesCount')||0),
+    sound: localStorage.getItem('valentine:sound')==='1'
+  };
 
-  function loadCustom(){
-    const msg = localStorage.getItem('valentineMessage') || DEFAULT_MSG;
-    const gif = localStorage.getItem('valentineGif') || DEFAULT_GIF;
-    modalMsg.textContent = msg;
-    modalGif.src = gif;
-    customMessageInput.value = msg;
-    customGifInput.value = gif;
+  const sadPhrases = [
+    "Oh… that stung a little.",
+    "I thought we had a moment…",
+    "That's okay. I still care.",
+    "I guess I tried. Still here."
+  ];
+
+  function save(){ localStorage.setItem('valentine:noCount', String(state.noCount)); localStorage.setItem('valentine:yesCount', String(state.yesCount)); localStorage.setItem('valentine:sound', state.sound?'1':'0'); }
+
+  // Initialize UI
+  function refreshUI(){
+    // heart pulse subtle when hopeful
+    if(state.noCount === 0) heart.classList.add('pulse'); else heart.classList.remove('pulse');
+    // sad tone when any No pressed
+    if(state.noCount > 0){ document.body.classList.add('sad'); status.textContent = "I'm a little sad. If you press Yes, I'll be okay."; }
+    else { document.body.classList.remove('sad'); status.textContent = "Be honest — you can press No, but I might get a little sad."; }
+    soundToggle.textContent = `Sound: ${state.sound? 'On':'Off'}`;
+  }
+  refreshUI();
+
+  // Sound helpers (soft chime and gentle sigh)
+  function playChime(){ if(!state.sound) return; try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type='sine'; o.frequency.value=720; g.gain.value=0.02; o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.3); setTimeout(()=>{ o.stop(); ctx.close(); },380); }catch(e){} }
+  function playSigh(){ if(!state.sound) return; try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type='sine'; o.frequency.value=220; g.gain.value=0.02; o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.7); setTimeout(()=>{ o.stop(); ctx.close(); },800); }catch(e){} }
+
+  // Sad behavior when No pressed
+  function handleNo(){
+    state.noCount++;
+    save();
+    refreshUI();
+
+    // Show sad overlay with increasingly tender messages
+    sadMsg.textContent = sadPhrases[Math.min(sadPhrases.length-1, state.noCount-1)];
+    sadOverlay.classList.add('show'); sadOverlay.setAttribute('aria-hidden','false');
+
+    // play a soft sigh and reduce heart opacity
+    playSigh(); heart.style.opacity = String(Math.max(0.35, 1 - state.noCount*0.18));
+
+    // slow down heart pulse based on sadness
+    if(state.noCount >= 3){ heart.classList.remove('pulse'); card.classList.add('soft-slow'); }
+
+    // change status microcopy
+    status.textContent = 'It hurts a little. You can press Yes to make it better.';
   }
 
-  loadCustom();
+  noBtn.addEventListener('click', (e)=>{ e.preventDefault(); handleNo(); });
 
-  // staged "No" behavior — give the user several creative chances to say Yes
-  let noAttempts = 0;
+  // allow small 'cheer up' button on overlay
+  cheerBtn.addEventListener('click', ()=>{ sadOverlay.classList.remove('show'); sadOverlay.setAttribute('aria-hidden','true'); status.textContent = 'Thanks. If you feel it, say Yes.'; });
 
-  function createHint(text){
-    const existing = document.querySelector('.hint');
-    if(existing) existing.remove();
-    const hint = document.createElement('div');
-    hint.className = 'hint';
-    hint.textContent = text;
-    container.appendChild(hint);
-    // show then auto-remove
-    requestAnimationFrame(()=> hint.classList.add('show'));
-    setTimeout(()=> hint && hint.remove(), 1600);
+  // Yes button: reset sadness and celebrate
+  function handleYes(){
+    state.yesCount++;
+    state.noCount = 0;
+    save();
+    refreshUI();
+
+    sadOverlay.classList.remove('show'); sadOverlay.setAttribute('aria-hidden','true');
+    heart.style.opacity = '1';
+
+    // celebration: gentle if they had said No before, big if immediate Yes
+    const mode = (state.yesCount>0 && state.noCount===0 && state.yesCount===1) ? 'joyful' : 'gentle';
+    if(mode==='gentle') launchConfetti('gentle'); else launchConfetti('joyful');
+
+    // show modal with customize message
+    modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
+    modalTitle.textContent = 'Yay! 💖';
+    modalMsg.textContent = customMessageInput.value.trim() || 'You made me so happy.';
+    celebrateGif.style.backgroundImage = `url('${customGifInput.value.trim() || DEFAULT_GIF}')`;
+
+    playChime();
+  }
+  yesBtn.addEventListener('click', handleYes);
+  closeBtn.addEventListener('click', ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); });
+
+  // Confetti: simple canvas burst
+  function launchConfetti(mode='joyful'){
+    if(mode==='gentle'){
+      const canvas=document.createElement('canvas');canvas.id='confettiCanvas';canvas.width=innerWidth;canvas.height=innerHeight;document.body.appendChild(canvas);const ctx=canvas.getContext('2d');let particles=[];for(let i=0;i<36;i++){particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height/2,r:Math.random()*6+6,alpha:1,vx:(Math.random()-0.5)*0.8,vy:Math.random()*0.8+0.2,color:`rgba(255,77,109,0.85)`});}let t0=performance.now();function f(t){const dt=t-t0;t0=t;ctx.clearRect(0,0,canvas.width,canvas.height);for(const p of particles){p.x+=p.vx*(dt/16);p.y+=p.vy*(dt/16);p.alpha-=0.004;ctx.fillStyle=`rgba(255,77,109,${p.alpha})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();}req=requestAnimationFrame(f);}let req=requestAnimationFrame(f);setTimeout(()=>{cancelAnimationFrame(req);canvas.remove();},2400);return;}
+    // joyful
+    const canvas=document.createElement('canvas');canvas.id='confettiCanvas';canvas.width=innerWidth;canvas.height=innerHeight;document.body.appendChild(canvas);const ctx=canvas.getContext('2d');let parts=[];const colors=['#ff4d6d','#ffd166','#9b5de5','#06d6a0','#f15bb5'];for(let i=0;i<120;i++){parts.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height/2,r:Math.random()*6+4,color:colors[Math.floor(Math.random()*colors.length)],vx:(Math.random()-0.5)*6,vy:Math.random()*6+2,rot:Math.random()*360,vr:(Math.random()-0.5)*10});}let t0=performance.now();function frame(t){const dt=t-t0;t0=t;ctx.clearRect(0,0,canvas.width,canvas.height);for(const p of parts){p.x+=p.vx*(dt/16);p.y+=p.vy*(dt/16);p.vy+=0.12;p.rot+=p.vr*(dt/16);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.fillStyle=p.color;ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6);ctx.restore();}}let rid=requestAnimationFrame(frame);setTimeout(()=>{cancelAnimationFrame(rid);canvas.remove();},2600);
   }
 
-  function showReconsiderDialog(){
-    if(document.getElementById('reconsider')) return;
-    const dialog = document.createElement('div');
-    dialog.id = 'reconsider';
-    dialog.className = 'reconsider';
-    dialog.innerHTML = `
-      <p class="reconsider-text">Are you sure?<br><small>Hint: the answer's closer than you think.</small></p>
-      <div class="reconsider-actions">
-        <button class="btn yes" id="reconsiderYes">Yes</button>
-        <button class="btn no small" id="reconsiderNo">No</button>
-      </div>
-    `;
-    container.appendChild(dialog);
-
-    const yes = document.getElementById('reconsiderYes');
-    const noSmall = document.getElementById('reconsiderNo');
-
-    yes.addEventListener('click', ()=>{ dialog.remove(); yesBtn.click(); });
-
-    // small No dodges a couple of times then surrenders
-    let dodge = 0;
-    function dodgeNo(ev){
-      ev.preventDefault();
-      dodge++;
-      if(dodge < 3){
-        const rect = dialog.getBoundingClientRect();
-        const btnRect = noSmall.getBoundingClientRect();
-        const maxLeft = Math.max(8, rect.width - btnRect.width - 20);
-        const maxTop = Math.max(8, rect.height - btnRect.height - 20);
-        const left = Math.random() * maxLeft;
-        const top = Math.random() * maxTop;
-        noSmall.style.position = 'absolute';
-        noSmall.style.left = left + 'px';
-        noSmall.style.top = top + 'px';
-        noSmall.animate([{transform:'translateY(-6px)'},{transform:'translateY(0)'}],{duration:160});
-      } else {
-        // surrender after several tries
-        dialog.remove();
-        yesBtn.click();
-      }
-    }
-    ['mouseenter','click','touchstart','focus'].forEach(e => noSmall.addEventListener(e, dodgeNo));
-    noSmall.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); dodgeNo(ev); } });
-
-    // auto-remove after some time
-    setTimeout(()=>{ if(document.getElementById('reconsider')) dialog.remove(); }, 12000);
-  }
-
-  function handleNoTroll(ev){
-    ev.preventDefault();
-    if(noBtn.dataset.trolling === '1') return;
-    noAttempts = Math.min(999, noAttempts + 1);
-
-    if(noAttempts === 1){
-      // gentle nudge: invites them to try Yes without taking control
-      noBtn.dataset.trolling = '1';
-      noBtn.classList.add('troll');
-      const yesRect = yesBtn.getBoundingClientRect();
-      const noRect = noBtn.getBoundingClientRect();
-      const dx = (yesRect.left + yesRect.width/2) - (noRect.left + noRect.width/2);
-      const dy = (yesRect.top + yesRect.height/2) - (noRect.top + noRect.height/2);
-      noBtn.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1)';
-      noBtn.style.transform = `translate(${dx*0.5}px, ${dy*0.12}px) rotate(-6deg) scale(.98)`;
-      setTimeout(()=>{
-        noBtn.style.transform = '';
-        noBtn.classList.remove('troll');
-        delete noBtn.dataset.trolling;
-        createHint('Maybe try Yes? ❤️');
-      }, 700);
-    } else if(noAttempts === 2){
-      // open reconsider dialog which gives prominent Yes and a dodging small No
-      showReconsiderDialog();
-    } else {
-      // eventual surrender: joyful animation then trigger Yes
-      noBtn.dataset.trolling = '1';
-      noBtn.disabled = true;
-      noBtn.textContent = 'Alright...';
-      const yesRect = yesBtn.getBoundingClientRect();
-      const noRect = noBtn.getBoundingClientRect();
-      const dx = (yesRect.left + yesRect.width/2) - (noRect.left + noRect.width/2);
-      const dy = (yesRect.top + yesRect.height/2) - (noRect.top + noRect.height/2);
-      noBtn.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1), opacity 240ms';
-      noBtn.style.transform = `translate(${dx}px, ${dy}px) scale(.7)`;
-      setTimeout(()=>{ noBtn.style.opacity = '0'; }, 480);
-      setTimeout(()=>{
-        noBtn.style.transform = '';
-        noBtn.style.opacity = '';
-        noBtn.textContent = 'No';
-        noBtn.disabled = false;
-        delete noBtn.dataset.trolling;
-        yesBtn.click();
-      }, 760);
-    }
-  }
-
-  // bind the staged handler to interactions
-  ['mouseenter','click','touchstart','focus'].forEach(e => noBtn.addEventListener(e, (ev)=>{ handleNoTroll(ev); }));
-  noBtn.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter' || ev.key===' ' || ev.key==='Spacebar'){ ev.preventDefault(); handleNoTroll(ev); } });
-
-  // simple confetti
-  function launchConfetti(){
-    const canvas = document.createElement('canvas');
-    canvas.id = 'confettiCanvas';
-    canvas.style.position = 'fixed';
-    canvas.style.left = 0; canvas.style.top = 0; canvas.style.width = '100%'; canvas.style.height = '100%';
-    canvas.style.pointerEvents = 'none';
-    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-    document.body.appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-    const particles = [];
-    const colors = ['#ff4d6d','#ffd166','#9b5de5','#06d6a0','#f15bb5'];
-    for(let i=0;i<120;i++){
-      particles.push({
-        x: Math.random()*canvas.width,
-        y: Math.random()*canvas.height - canvas.height/2,
-        r: Math.random()*6+4,
-        color: colors[Math.floor(Math.random()*colors.length)],
-        vx: (Math.random()-0.5)*6,
-        vy: Math.random()*6+2,
-        rot: Math.random()*360,
-        vr: (Math.random()-0.5)*10
-      });
-    }
-
-    let t0 = performance.now();
-    function frame(t){
-      const dt = t - t0; t0 = t;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      for(const p of particles){
-        p.x += p.vx * (dt/16);
-        p.y += p.vy * (dt/16);
-        p.vy += 0.12; // gravity
-        p.rot += p.vr * (dt/16);
-        ctx.save();
-        ctx.translate(p.x,p.y);
-        ctx.rotate(p.rot*Math.PI/180);
-        ctx.fillStyle = p.color;
-        ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.6);
-        ctx.restore();
-      }
-    
-      requestId = requestAnimationFrame(frame);
-    }
-    let requestId = requestAnimationFrame(frame);
-    // remove after 2.6s
-    setTimeout(()=>{
-      cancelAnimationFrame(requestId);
-      canvas.remove();
-    },2600);
-  }
-
-  // Yes button: show modal with gif and message, and launch confetti
-  yesBtn.addEventListener('click', ()=>{
-    launchConfetti();
-    // a tiny delay so confetti starts
-    setTimeout(()=>{
-      modal.classList.add('show');
-      modal.setAttribute('aria-hidden','false');
-    },120);
-  });
-
-  closeBtn.addEventListener('click', ()=>{
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden','true');
-  });
-
-  // share link (copies the current custom message to clipboard)
-  share.addEventListener('click', (e)=>{
-    e.preventDefault();
-    const text = modalMsg.textContent + ' 💖';
-    if(navigator.clipboard){
-      navigator.clipboard.writeText(text).then(()=>{
-        share.textContent = 'Copied!';
-        setTimeout(()=> share.textContent = 'Share the love', 1800);
-      });
-    }
-  });
-
-  // customize panel
-  customizeBtn.addEventListener('click', ()=>{
-    customizePane.classList.add('show');
-    customizePane.setAttribute('aria-hidden','false');
-  });
-  customClose.addEventListener('click', ()=>{
-    customizePane.classList.remove('show');
-    customizePane.setAttribute('aria-hidden','true');
-  });
+  // Customize
+  customizeBtn.addEventListener('click', ()=>{ customizePane.classList.add('show'); customizePane.setAttribute('aria-hidden','false'); });
+  customClose.addEventListener('click', ()=>{ customizePane.classList.remove('show'); customizePane.setAttribute('aria-hidden','true'); });
   cancelCustom.addEventListener('click', (e)=>{ e.preventDefault(); customClose.click(); });
+  saveCustom.addEventListener('click', ()=>{ localStorage.setItem('valentineMessage', customMessageInput.value.trim()); localStorage.setItem('valentineGif', customGifInput.value.trim()); customClose.click(); });
+  customMessageInput.value = localStorage.getItem('valentineMessage') || 'You made me so happy.';
+  customGifInput.value = localStorage.getItem('valentineGif') || DEFAULT_GIF;
 
-  saveCustom.addEventListener('click', (e)=>{
-    const msg = customMessageInput.value.trim() || DEFAULT_MSG;
-    const gif = customGifInput.value.trim() || DEFAULT_GIF;
-    localStorage.setItem('valentineMessage', msg);
-    localStorage.setItem('valentineGif', gif);
-    loadCustom();
-    customClose.click();
-  });
+  // Sound toggle
+  soundToggle.addEventListener('click', ()=>{ state.sound = !state.sound; save(); refreshUI(); });
 
-  // keep inputs accessible: pressing Enter saves
-  [customMessageInput, customGifInput].forEach(inp => inp.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter'){ ev.preventDefault(); saveCustom.click(); } }));
+  // Small thoughtful timers: idle 'stay' message
+  let idle=null; function resetIdle(){ if(idle) clearTimeout(idle); idle=setTimeout(()=>{ if(state.noCount===0){ const note=document.createElement('div');note.className='idle-note';note.textContent="I was hoping you'd stay."; card.appendChild(note); setTimeout(()=>note.remove(),4300); } },15000); }
+  ['mousemove','keydown','click','touchstart'].forEach(ev=>document.addEventListener(ev, resetIdle, {passive:true})); resetIdle();
+
+  // Save and refresh initially
+  save(); refreshUI();
 
 });

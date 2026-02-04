@@ -1,24 +1,31 @@
-# Be My Valentine 💘
+# Valentine — Revamp
 
-Repository: https://github.com/sifat-cloud/valentine
+A redesigned, emotional Valentine page that respects the user's feelings. The site remembers interactions and evolves: pressing **No** makes the site quietly sad (copy, tone, and visuals), while **Yes** heals it with a heartfelt celebration.
 
-A tiny playful static page to ask someone to be your Valentine. One button is unavoidable (No will teleport away!), and the other celebrates when clicked.
+## What changed
+
+- A simpler, elegant layout with a central beating heart and clear Yes/No actions.
+- Emotional states: every **No** increases sadness (gentle messages, desaturation, slower animations). The site only recovers after **Yes**.
+- Customization: user can set the Yes message and GIF; sound toggle (off by default).
+- Subtle mechanics: idle message for patience, soft confetti, and emotional audio cues.
 
 ## Local preview
 
 - Open `index.html` in a browser
-- Or use a simple server for local testing:
-  - Python: `python -m http.server 8000` then visit `http://localhost:8000`
-  - VS Code: Use the Live Server extension
+- Or run: `python -m http.server 8000` and open `http://localhost:8000`
 
-## Features
+## Deploy
 
-- Playful "No" button with staged interactions: a gentle nudge, a "reconsider" dialog (with a dodging mini-No), and joyful surrender — all designed so the answer ends up as a yes ❤️
-- Personality & memory: the site remembers how you treat it (counts No/Yes) and evolves: first No gets a gentle message, second No desaturates the UI, third No slows animations and changes button text; final surrender shows a gentler confetti.
-- Time-Based Romance: patience is rewarded — hovering on **Yes** for 7 seconds triggers a heartbeat and a special "Soft Yes" ending; staying idle for 15s reveals a gentle note: "I was hoping you'd stay." ⏳
-- Secret Yes Paths (Easter eggs): triple-click the heart, type "yes", click background while holding Space, or shake your phone to unlock unique endings. Each discovered ending is tracked in the badge. 🧩
-- Confetti modes: joyful, chaotic, and gentle depending on mood.
+- Push branch and create a PR when ready. Deploy to Vercel by connecting the GitHub repo and importing the project (no build step required for this static site).
 
+---
+
+If you want, I can:
+- Add more endings and hidden paths (secret keys, shakes)
+- Add small music and refined audio experience
+- Replace GIFs with your own assets
+
+Tell me which extras to add next.
 ## Publish to GitHub
 
 1. Initialize repo locally:
