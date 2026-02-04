@@ -60,11 +60,28 @@ h1{font-size:2rem;margin:0 0 .5rem;color:var(--accent)}
 .hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%) scale(.95);background:rgba(255,255,255,0.98);padding:.45rem .75rem;border-radius:999px;box-shadow:0 8px 22px rgba(0,0,0,.12);opacity:0;transition:all .18s ease;color:var(--accent);font-weight:800}
 .hint.show{opacity:1;transform:translateX(-50%) scale(1)}
 
+/* small mutter under the card when things feel quiet */
+.mutter{color:#a07e7e;margin-top:.65rem;font-style:italic}
+
+/* idle note */
+.idle-note{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;background:rgba(255,255,255,0.96);padding:.5rem .8rem;border-radius:10px;color:#6b4b4b;box-shadow:0 8px 22px rgba(0,0,0,.08)}
+
 /* reconsider dialog */
 .reconsider{position:absolute;left:50%;top:55%;transform:translateX(-50%);background:var(--card);padding:1rem;border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.12);min-width:260px;text-align:center}
 .reconsider .reconsider-text{margin:0 0 .5rem;color:var(--text)}
 .reconsider .reconsider-actions{position:relative;height:64px;display:block}
 .reconsider .btn.small{padding:.4rem .6rem;border-radius:8px}
+
+/* ending badge */
+.ending-badge{position:absolute;right:12px;top:12px;background:rgba(255,255,255,0.98);padding:.35rem .6rem;border-radius:999px;color:var(--accent);font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.08);font-size:.85rem}
+
+/* personality modes */
+body.quiet{filter:grayscale(.38) saturate(.6)}
+body.soft-slow *{transition-duration:420ms !important}
+
+/* glitch moment */
+.glitch .buttons{transform:translateX(-6px);}
+.glitch h1::after{content:' Will you—will you—';opacity:.9;display:block;color:var(--accent)}
 
 /* responsive */
 @media (max-width:420px){h1{font-size:1.5rem}.buttons{gap:.5rem;padding:0 0.5rem}.modal .celebrate{width:160px}}

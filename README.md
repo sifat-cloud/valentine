@@ -13,9 +13,11 @@ A tiny playful static page to ask someone to be your Valentine. One button is un
 
 ## Features
 
-- Playful "No" button that avoids clicks but now offers **multiple staged chances**: a gentle nudge, a "reconsider" dialog (with a dodging mini-No), and joyful surrender — all designed so the answer ends up as a yes ❤️
-- Celebrate with a GIF and **confetti** animation when someone clicks **Yes** 🎉
-- **Customize** the celebration message and GIF via the "Customize" button (saved to localStorage)
+- Playful "No" button with staged interactions: a gentle nudge, a "reconsider" dialog (with a dodging mini-No), and joyful surrender — all designed so the answer ends up as a yes ❤️
+- Personality & memory: the site remembers how you treat it (counts No/Yes) and evolves: first No gets a gentle message, second No desaturates the UI, third No slows animations and changes button text; final surrender shows a gentler confetti.
+- Time-Based Romance: patience is rewarded — hovering on **Yes** for 7 seconds triggers a heartbeat and a special "Soft Yes" ending; staying idle for 15s reveals a gentle note: "I was hoping you'd stay." ⏳
+- Secret Yes Paths (Easter eggs): triple-click the heart, type "yes", click background while holding Space, or shake your phone to unlock unique endings. Each discovered ending is tracked in the badge. 🧩
+- Confetti modes: joyful, chaotic, and gentle depending on mood.
 
 ## Publish to GitHub
 
