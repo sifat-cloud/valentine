@@ -1,22 +1,31 @@
-# Be My Valentine 💘
+# Valentine — Revamp
 
-Repository: https://github.com/sifat-cloud/valentine
+A redesigned, emotional Valentine page that respects the user's feelings. The site remembers interactions and evolves: pressing **No** makes the site quietly sad (copy, tone, and visuals), while **Yes** heals it with a heartfelt celebration.
 
-A tiny playful static page to ask someone to be your Valentine. One button is unavoidable (No will teleport away!), and the other celebrates when clicked.
+## What changed
+
+- A simpler, elegant layout with a central beating heart and clear Yes/No actions.
+- Emotional states: every **No** increases sadness (gentle messages, desaturation, slower animations). The site only recovers after **Yes**.
+- Customization: user can set the Yes message and GIF; sound toggle (off by default).
+- Subtle mechanics: idle message for patience, soft confetti, and emotional audio cues.
 
 ## Local preview
 
 - Open `index.html` in a browser
-- Or use a simple server for local testing:
-  - Python: `python -m http.server 8000` then visit `http://localhost:8000`
-  - VS Code: Use the Live Server extension
+- Or run: `python -m http.server 8000` and open `http://localhost:8000`
 
-## Features
+## Deploy
 
-- Playful "No" button that avoids clicks but now offers **multiple staged chances**: a gentle nudge, a "reconsider" dialog (with a dodging mini-No), and joyful surrender — all designed so the answer ends up as a yes ❤️
-- Celebrate with a GIF and **confetti** animation when someone clicks **Yes** 🎉
-- **Customize** the celebration message and GIF via the "Customize" button (saved to localStorage)
+- Push branch and create a PR when ready. Deploy to Vercel by connecting the GitHub repo and importing the project (no build step required for this static site).
 
+---
+
+If you want, I can:
+- Add more endings and hidden paths (secret keys, shakes)
+- Add small music and refined audio experience
+- Replace GIFs with your own assets
+
+Tell me which extras to add next.
 ## Publish to GitHub
 
 1. Initialize repo locally:
