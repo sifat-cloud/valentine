@@ -77,6 +77,14 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Show one gentle flood message per No press (no autoplay)
   let floodIndex = 0;
   let floodTimeout = null;
+
+  // Ephemeral No-counter: single No shows a gentle line then we "cheer up".
+  // If the user presses No repeatedly within MESSAGE duration, it becomes persistent sadness.
+  let tempNoCount = 0;
+  let tempNoTimer = null;
+  const NO_OVERLAY_THRESHOLD = 3;
+  const MSG_DURATION = 1800;
+
   function showNextFloodMessage(){
     // ensure only one flood element exists
     let flood = card.querySelector('.flood');
@@ -105,29 +113,43 @@ document.addEventListener('DOMContentLoaded', ()=>{
       msg.classList.remove('visible');
       // clean up container shortly after hiding
       setTimeout(()=>{ if(flood && flood.parentNode) flood.remove(); }, 300);
-
-      // if they've pressed No enough times, show the overlay with a tender message
-      if(state.noCount >= 3){
-        sadMsg.textContent = sadPhrases[Math.min(sadPhrases.length-1, state.noCount-1)];
-        sadOverlay.classList.add('show'); sadOverlay.setAttribute('aria-hidden','false');
-      }
-    }, 1800);
+    }, MSG_DURATION);
   }
 
-  // Sad behavior when No pressed
+  // Sad behavior when No pressed (ephemeral by default)
   function handleNo(){
-    state.noCount++;
-    save();
-    refreshUI();
+    // track ephemeral presses — single press will "cheer up" after MSG_DURATION
+    tempNoCount++;
 
     // show a single gentle message per No press (no autoplay)
     showNextFloodMessage();
 
-    // play a soft sigh and reduce heart opacity
-    playSigh(); heart.style.opacity = String(Math.max(0.35, 1 - state.noCount*0.18));
+    // a soft sigh for presence, but don't make sadness persistent on a single press
+    playSigh(); heart.style.opacity = String(Math.max(0.85, 1 - tempNoCount*0.06));
 
-    // slow down heart pulse based on sadness
-    if(state.noCount >= 3){ heart.classList.remove('pulse'); card.classList.add('soft-slow'); }
+    // schedule commit-to-sadness if they keep pressing quickly
+    if(tempNoTimer) clearTimeout(tempNoTimer);
+    tempNoTimer = setTimeout(()=>{
+      if(tempNoCount >= NO_OVERLAY_THRESHOLD){
+        // promote ephemeral presses to persistent sadness
+        state.noCount = Math.max(state.noCount, tempNoCount);
+        save();
+        refreshUI();
+        sadMsg.textContent = sadPhrases[Math.min(sadPhrases.length-1, state.noCount-1)];
+        sadOverlay.classList.add('show'); sadOverlay.setAttribute('aria-hidden','false');
+        // make the heart reflect sustained sadness
+        heart.style.opacity = String(Math.max(0.35, 1 - state.noCount*0.18));
+        if(state.noCount >= 3){ heart.classList.remove('pulse'); card.classList.add('soft-slow'); }
+      } else {
+        // just cheer up and reset the ephemeral counter
+        playChime();
+        tempNoCount = 0;
+        heart.style.opacity = '1';
+        refreshUI();
+      }
+      tempNoCount = 0;
+      tempNoTimer = null;
+    }, MSG_DURATION + 200);
 
     // change status microcopy
     status.textContent = 'It hurts a little. You can press Yes to make it better.';
