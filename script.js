@@ -31,49 +31,118 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   loadCustom();
 
-  // playful "No" behavior — it trolls the user and makes saying "No" impossible
-  function handleNoTroll(ev){
-    ev.preventDefault();
-    // if it's already trolling, ignore
-    if(noBtn.dataset.trolling === '1') return;
-    noBtn.dataset.trolling = '1';
-    noBtn.disabled = true;
-    const originalText = noBtn.textContent;
-    noBtn.textContent = "No... wait!";
-    noBtn.classList.add('troll');
+  // staged "No" behavior — give the user several creative chances to say Yes
+  let noAttempts = 0;
 
-    // calculate vector toward the Yes button and animate there
-    const yesRect = yesBtn.getBoundingClientRect();
-    const noRect = noBtn.getBoundingClientRect();
-    const dx = (yesRect.left + yesRect.width/2) - (noRect.left + noRect.width/2);
-    const dy = (yesRect.top + yesRect.height/2) - (noRect.top + noRect.height/2);
-
-    // use transform animation so we don't change layout
-    noBtn.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1), opacity 240ms';
-    noBtn.style.transform = `translate(${dx}px, ${dy}px) scale(.7)`;
-
-    // after it "reaches" the Yes, fade it and trigger the Yes action
-    setTimeout(()=>{
-      noBtn.style.opacity = '0';
-    }, 480);
-
-    setTimeout(()=>{
-      // restore button visuals (but not the original position — stays playful)
-      noBtn.style.transform = '';
-      noBtn.style.opacity = '';
-      noBtn.classList.remove('troll');
-      noBtn.textContent = originalText;
-      noBtn.disabled = false;
-      delete noBtn.dataset.trolling;
-
-      // trigger the yes flow so No never wins
-      yesBtn.click();
-    }, 760);
+  function createHint(text){
+    const existing = document.querySelector('.hint');
+    if(existing) existing.remove();
+    const hint = document.createElement('div');
+    hint.className = 'hint';
+    hint.textContent = text;
+    container.appendChild(hint);
+    // show then auto-remove
+    requestAnimationFrame(()=> hint.classList.add('show'));
+    setTimeout(()=> hint && hint.remove(), 1600);
   }
 
-  // bind the troll handler to common interactions
+  function showReconsiderDialog(){
+    if(document.getElementById('reconsider')) return;
+    const dialog = document.createElement('div');
+    dialog.id = 'reconsider';
+    dialog.className = 'reconsider';
+    dialog.innerHTML = `
+      <p class="reconsider-text">Are you sure?<br><small>Hint: the answer's closer than you think.</small></p>
+      <div class="reconsider-actions">
+        <button class="btn yes" id="reconsiderYes">Yes</button>
+        <button class="btn no small" id="reconsiderNo">No</button>
+      </div>
+    `;
+    container.appendChild(dialog);
+
+    const yes = document.getElementById('reconsiderYes');
+    const noSmall = document.getElementById('reconsiderNo');
+
+    yes.addEventListener('click', ()=>{ dialog.remove(); yesBtn.click(); });
+
+    // small No dodges a couple of times then surrenders
+    let dodge = 0;
+    function dodgeNo(ev){
+      ev.preventDefault();
+      dodge++;
+      if(dodge < 3){
+        const rect = dialog.getBoundingClientRect();
+        const btnRect = noSmall.getBoundingClientRect();
+        const maxLeft = Math.max(8, rect.width - btnRect.width - 20);
+        const maxTop = Math.max(8, rect.height - btnRect.height - 20);
+        const left = Math.random() * maxLeft;
+        const top = Math.random() * maxTop;
+        noSmall.style.position = 'absolute';
+        noSmall.style.left = left + 'px';
+        noSmall.style.top = top + 'px';
+        noSmall.animate([{transform:'translateY(-6px)'},{transform:'translateY(0)'}],{duration:160});
+      } else {
+        // surrender after several tries
+        dialog.remove();
+        yesBtn.click();
+      }
+    }
+    ['mouseenter','click','touchstart','focus'].forEach(e => noSmall.addEventListener(e, dodgeNo));
+    noSmall.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); dodgeNo(ev); } });
+
+    // auto-remove after some time
+    setTimeout(()=>{ if(document.getElementById('reconsider')) dialog.remove(); }, 12000);
+  }
+
+  function handleNoTroll(ev){
+    ev.preventDefault();
+    if(noBtn.dataset.trolling === '1') return;
+    noAttempts = Math.min(999, noAttempts + 1);
+
+    if(noAttempts === 1){
+      // gentle nudge: invites them to try Yes without taking control
+      noBtn.dataset.trolling = '1';
+      noBtn.classList.add('troll');
+      const yesRect = yesBtn.getBoundingClientRect();
+      const noRect = noBtn.getBoundingClientRect();
+      const dx = (yesRect.left + yesRect.width/2) - (noRect.left + noRect.width/2);
+      const dy = (yesRect.top + yesRect.height/2) - (noRect.top + noRect.height/2);
+      noBtn.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1)';
+      noBtn.style.transform = `translate(${dx*0.5}px, ${dy*0.12}px) rotate(-6deg) scale(.98)`;
+      setTimeout(()=>{
+        noBtn.style.transform = '';
+        noBtn.classList.remove('troll');
+        delete noBtn.dataset.trolling;
+        createHint('Maybe try Yes? ❤️');
+      }, 700);
+    } else if(noAttempts === 2){
+      // open reconsider dialog which gives prominent Yes and a dodging small No
+      showReconsiderDialog();
+    } else {
+      // eventual surrender: joyful animation then trigger Yes
+      noBtn.dataset.trolling = '1';
+      noBtn.disabled = true;
+      noBtn.textContent = 'Alright...';
+      const yesRect = yesBtn.getBoundingClientRect();
+      const noRect = noBtn.getBoundingClientRect();
+      const dx = (yesRect.left + yesRect.width/2) - (noRect.left + noRect.width/2);
+      const dy = (yesRect.top + yesRect.height/2) - (noRect.top + noRect.height/2);
+      noBtn.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1), opacity 240ms';
+      noBtn.style.transform = `translate(${dx}px, ${dy}px) scale(.7)`;
+      setTimeout(()=>{ noBtn.style.opacity = '0'; }, 480);
+      setTimeout(()=>{
+        noBtn.style.transform = '';
+        noBtn.style.opacity = '';
+        noBtn.textContent = 'No';
+        noBtn.disabled = false;
+        delete noBtn.dataset.trolling;
+        yesBtn.click();
+      }, 760);
+    }
+  }
+
+  // bind the staged handler to interactions
   ['mouseenter','click','touchstart','focus'].forEach(e => noBtn.addEventListener(e, (ev)=>{ handleNoTroll(ev); }));
-  // keyboard support: Enter/Space
   noBtn.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter' || ev.key===' ' || ev.key==='Spacebar'){ ev.preventDefault(); handleNoTroll(ev); } });
 
   // simple confetti
